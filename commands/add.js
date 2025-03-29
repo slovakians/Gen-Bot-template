@@ -8,7 +8,7 @@ module.exports = {
         .setDescription('Add an account or item to the stock')
         .addStringOption(option =>
             option.setName('service')
-                .setDescription('The service name (e.g., Xbox, Steam)')
+                .setDescription('The service name (e.g., Xbox, Steam, Disney+)')
                 .setRequired(true)
         )
         .addStringOption(option =>
@@ -20,32 +20,41 @@ module.exports = {
         const service = interaction.options.getString('service').toLowerCase();
         const account = interaction.options.getString('account');
 
-        const stockFolder = path.join(__dirname, 'Stock');
-        const filePath = path.join(stockFolder, `${service}.txt`);
+        // Check if the service is already stored in Free or Premium
+        const freePath = `./commands/Stock/Free/${service}.txt`;
+        const premiumPath = `./commands/Stock/Premium/${service}.txt`;
 
-        // Check if the service exists
-        if (!fs.existsSync(filePath)) {
-            return await interaction.reply({
-                embeds: [
-                    new EmbedBuilder()
-                        .setColor('#ff0000')
-                        .setTitle('❌ Service Not Found')
-                        .setDescription(`The service **${service}** does not exist.\nUse **/create** to add it first!`)
-                ],
-                ephemeral: true
-            });
+        let folderPath = './commands/Stock/Free/'; // Default to Free
+
+        if (fs.existsSync(premiumPath)) {
+            folderPath = './commands/Stock/Premium/'; // If it's already Premium, keep it Premium
+        } else if (fs.existsSync(freePath)) {
+            folderPath = './commands/Stock/Free/'; // If it's already Free, keep it Free
+        } else {
+            // If it's a new service, default to Free
+            folderPath = './commands/Stock/Free/';
         }
 
-        // Append the account/item to the file
+        // Ensure the folder exists
+        if (!fs.existsSync(folderPath)) {
+            fs.mkdirSync(folderPath, { recursive: true });
+        }
+
+        // Save the account to the correct file
+        const filePath = `${folderPath}${service}.txt`;
         fs.appendFileSync(filePath, `${account}\n`);
+
+        // Check if it's in Free or Premium
+        const isPremium = folderPath.includes('Premium');
 
         // Embed confirmation
         const embed = new EmbedBuilder()
-            .setColor('#00ff00')
+            .setColor(isPremium ? '#FFD700' : '#2b2d31') // Gold for Premium, Dark for Free
             .setTitle('✅ Account Added to Stock')
             .addFields(
                 { name: '🔹 Service', value: `${service.charAt(0).toUpperCase() + service.slice(1)}`, inline: true },
-                { name: '🔹 Account', value: `\`${account}\``, inline: false }
+                { name: '🔹 Account', value: `\`${account}\``, inline: false },
+                { name: '🔹 Type', value: isPremium ? 'Premium' : 'Free', inline: true }
             )
             .setFooter({ text: 'Stock updated successfully!' });
 
