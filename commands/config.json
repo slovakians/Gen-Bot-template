@@ -1,0 +1,6 @@
+{
+    "freeRole": "ROLEID",
+    "premiumRole": "ROLEID",
+    "noCooldownRole": "ROLEID",
+    "cooldown": 10
+}
