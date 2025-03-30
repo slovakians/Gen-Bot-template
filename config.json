@@ -1,6 +1,6 @@
 {
-    "token": "DISCORD BOT TOKEN",
-    "clientId": "DISCORD BOT CLIENT ID",
+    "token": "BOT TOKEN",
+    "clientId": "BOT CLIENTID",
     "guildId": "GUILD ID"
   }
   

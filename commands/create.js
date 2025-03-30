@@ -14,34 +14,28 @@ module.exports = {
         )
         .addStringOption(option =>
             option.setName('type')
-                .setDescription('Choose Free or Premium')
+                .setDescription('Choose Free')
                 .setRequired(true)
                 .addChoices(
-                    { name: '🆓 Free', value: 'free' },
-                    { name: '💎 Premium', value: 'premium' }
+                    { name: '🆓 Free', value: 'free' }
                 )
         ),
     async execute(interaction) {
         const member = interaction.member;
         const service = interaction.options.getString('name').toLowerCase();
-        const type = interaction.options.getString('type');
 
         // Get role settings from config
         const freeRole = config.freeRole || null;
-        const premiumRole = config.premiumRole || null;
 
         // Check if the user has permission (skip if no role is set)
-        if (type === 'premium' && premiumRole && !member.roles.cache.has(premiumRole)) {
-            return interaction.reply({ content: '❌ You do not have permission to create **Premium** services!', ephemeral: true });
-        }
-        if (type === 'free' && freeRole && !member.roles.cache.has(freeRole)) {
+        if (freeRole && !member.roles.cache.has(freeRole)) {
             return interaction.reply({ content: '❌ You do not have permission to create **Free** services!', ephemeral: true });
         }
 
-        // Fix: Correctly store Free & Premium in separate folders
-        const stockFolder = path.join(__dirname, '..', 'Stock', type === 'premium' ? 'Premium' : 'Free');
+        // Set stock folder inside `commands/Stock/Free`
+        const stockFolder = path.join(__dirname, 'Stock', 'Free');
 
-        // Make sure the correct folder exists
+        // Ensure the stock folder exists
         if (!fs.existsSync(stockFolder)) {
             fs.mkdirSync(stockFolder, { recursive: true });
         }
@@ -58,11 +52,11 @@ module.exports = {
 
         // Send confirmation embed
         const embed = new EmbedBuilder()
-            .setColor(type === 'premium' ? '#FFD700' : '#2b2d31')
+            .setColor('#2b2d31')
             .setTitle('✅ Service Created')
             .addFields(
                 { name: '🔹 Service Name', value: `${service.charAt(0).toUpperCase() + service.slice(1)}`, inline: true },
-                { name: '🔹 Type', value: type === 'premium' ? '💎 Premium' : '🆓 Free', inline: true }
+                { name: '🔹 Type', value: '🆓 Free', inline: true }
             )
             .setFooter({ text: 'TEST G3N - Service successfully created!' });
 

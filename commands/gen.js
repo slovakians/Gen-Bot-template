@@ -2,8 +2,12 @@ const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
 
-// Load config from the commands folder
-const configPath = path.resolve(__dirname, './config.json');
+// Load config
+const configPath = path.resolve(__dirname, '../config.json');
+if (!fs.existsSync(configPath)) {
+    console.error('❌ Missing config.json! Please create one in the root directory.');
+    process.exit(1); // Stop execution if config is missing
+}
 const config = require(configPath);
 
 const cooldowns = new Map();
@@ -16,33 +20,19 @@ module.exports = {
             option.setName('service')
                 .setDescription('The service name (e.g., Xbox, Steam, Disney+)')
                 .setRequired(true)
-        )
-        .addStringOption(option =>
-            option.setName('type')
-                .setDescription('Choose Free or Premium')
-                .setRequired(true)
-                .addChoices(
-                    { name: 'Free', value: 'free' },
-                    { name: 'Premium', value: 'premium' }
-                )
         ),
     async execute(interaction) {
         const user = interaction.user;
         const member = interaction.member;
         const service = interaction.options.getString('service').toLowerCase();
-        const type = interaction.options.getString('type');
 
         // Get role settings from config
         const freeRole = config.freeRole;
-        const premiumRole = config.premiumRole;
         const noCooldownRole = config.noCooldownRole;
         const cooldownTime = config.cooldown * 1000;
 
-        // Role-based restrictions
-        if (type === 'premium' && !member.roles.cache.has(premiumRole)) {
-            return interaction.reply({ content: '❌ You do not have access to **Premium** stock!', ephemeral: true });
-        }
-        if (!member.roles.cache.has(freeRole) && !member.roles.cache.has(premiumRole)) {
+        // Check if user has the required role
+        if (freeRole && !member.roles.cache.has(freeRole)) {
             return interaction.reply({ content: '❌ You do not have permission to use this command!', ephemeral: true });
         }
 
@@ -57,9 +47,9 @@ module.exports = {
             cooldowns.set(user.id, now);
         }
 
-        // Determine stock folder
-        const stockFolder = type === 'premium' ? path.resolve(__dirname, './Stock/Premium/') : path.resolve(__dirname, './Stock/Free/');
-        const filePath = `${stockFolder}/${service}.txt`;
+        // Stock file path
+        const stockFolder = path.resolve(__dirname, '../commands/Stock/Free/');
+        const filePath = path.join(stockFolder, `${service}.txt`);
 
         if (!fs.existsSync(filePath) || fs.readFileSync(filePath, 'utf-8').trim() === '') {
             return interaction.reply({ content: `❌ No stock available for **${service}**!`, ephemeral: true });
@@ -78,25 +68,24 @@ module.exports = {
             .setColor('#2b2d31')
             .setTitle('✅ Account Generated')
             .setDescription(`Check your DM ${user}! If you do not receive the message, please unlock your private messages.`)
-            .setFooter({ text: 'NUKE G3N - Enjoy your account!' });
+            .setFooter({ text: 'TEST G3N - Enjoy your account!' });
 
         await interaction.reply({ embeds: [publicEmbed] });
 
         // Send account in DM with Click-to-Copy
         const dmEmbed = new EmbedBuilder()
-            .setColor(type === 'premium' ? '#FFD700' : '#2b2d31')
+            .setColor('#2b2d31')
             .setTitle('🎁 Generated Account')
             .addFields(
                 { name: '🔹 Service', value: `${service.charAt(0).toUpperCase() + service.slice(1)}`, inline: true },
-                { name: '🔹 Account', value: `\`\`\`${account}\`\`\``, inline: false },
-                { name: '🔹 Type', value: type.charAt(0).toUpperCase() + type.slice(1), inline: true }
+                { name: '🔹 Account', value: `\`\`\`${account}\`\`\``, inline: false }
             )
             .setFooter({ text: 'Enjoy your account!' });
 
         try {
             await user.send({ embeds: [dmEmbed] });
         } catch (err) {
-            console.error('Could not send DM:', err);
+            console.error('❌ Could not send DM:', err);
         }
     }
 };

@@ -1,4 +1,4 @@
-const { Client, GatewayIntentBits, Collection, ActivityType } = require('discord.js');
+const { Client, GatewayIntentBits, Collection, ActivityType, REST, Routes } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
 const config = require('./config.json');
@@ -11,11 +11,27 @@ client.commands = new Collection();
 const commandsPath = path.join(__dirname, 'commands');
 const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
 
+const commands = [];
 for (const file of commandFiles) {
     const filePath = path.join(commandsPath, file);
     const command = require(filePath);
     client.commands.set(command.data.name, command);
+    commands.push(command.data.toJSON());
 }
+
+// Register Slash Commands to a Specific Guild
+const rest = new REST({ version: '10' }).setToken(config.token);
+const guildId = config.guildId; // Ensure you have "guildId" in config.json
+
+(async () => {
+    try {
+        console.log('🔄 Refreshing slash commands...');
+        await rest.put(Routes.applicationGuildCommands(config.clientId, guildId), { body: commands });
+        console.log(`✅ Successfully registered commands to guild: ${guildId}`);
+    } catch (error) {
+        console.error('❌ Error registering commands:', error);
+    }
+})();
 
 // Event: Bot Ready
 client.once('ready', () => {
