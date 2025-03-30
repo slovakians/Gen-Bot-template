@@ -30,11 +30,8 @@ Edit the `config.json` file with your bot token:
 }
 ```
 
-### **3️⃣ Register Slash Commands**  
-Run this to register commands to your bot:  
-```bash
-node deploy-commands.js
-```
+### **3️⃣ Configure The config.jsons**  
+
 
 ### **4️⃣ Start the Bot**  
 Launch the bot with:  
